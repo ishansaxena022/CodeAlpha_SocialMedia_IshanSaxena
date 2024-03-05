@@ -11,6 +11,9 @@
 </head>
 <body>
 <?php
+// if (!isset($_SESSION['user_id'])) {
+//     // header("Location: index.php");} // Redirect user to login page if not logged in
+//     // exit();
 include 'dbcon.php'; // Include the database connection script
 
 // Check if the form is submitted

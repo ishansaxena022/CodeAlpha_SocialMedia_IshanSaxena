@@ -1,3 +1,6 @@
+<?php
+    session_start();
+?>
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -5,7 +8,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Add Friends</title>
     <?php include "../css/links.php"; ?>
-    <link rel="stylesheet" href="css/headers.css">
+    <link rel="stylesheet" href="../css/headers.css">
 </head>
 <body>
     <!--Navigation Bar-->
@@ -53,6 +56,68 @@
         </div>
         </header>
     </div>
+
+    <?php
+
+
+include '../dbcon.php'; // Include the database connection script
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    echo "You must be logged in to add a friend.";
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+if ($_SERVER["REQUEST_METHOD"] == "POST") {
+    // Get friend's username from the form
+    $friendUsername = $_POST['friendUsername'];
+
+    // Query to retrieve friend's user ID
+    $sql = "SELECT id FROM users WHERE username = ?";
+    $stmt = $con->prepare($sql);
+    $stmt->bind_param("s", $friendUsername);
+    $stmt->execute();
+    $result = $stmt->get_result();
+
+    if ($result->num_rows == 1) {
+        $row = $result->fetch_assoc();
+        $friend_id = $row['id'];
+
+        // Check if friendship already exists
+        $sql_check_friendship = "SELECT * FROM friendships WHERE user1_id = ? AND user2_id = ?";
+        $stmt_check_friendship = $con->prepare($sql_check_friendship);
+        $stmt_check_friendship->bind_param("ii", $user_id, $friend_id);
+        $stmt_check_friendship->execute();
+        $result_check_friendship = $stmt_check_friendship->get_result();
+
+        if ($result_check_friendship->num_rows == 0) {
+            // Add new friendship
+            $sql_add_friendship = "INSERT INTO friendships (user1_id, user2_id) VALUES (?, ?)";
+            $stmt_add_friendship = $con->prepare($sql_add_friendship);
+            $stmt_add_friendship->bind_param("ii", $user_id, $friend_id);
+            if ($stmt_add_friendship->execute()) {
+                echo "Friend added successfully!";
+            } else {
+                echo "Error adding friend: " . $con->error;
+            }
+            $stmt_add_friendship->close();
+        } else {
+            echo "You are already friends with " . $friendUsername . ".";
+        }
+
+        $stmt_check_friendship->close();
+    } else {
+        echo "User '" . $friendUsername . "' not found.";
+    }
+
+    $stmt->close();
+}
+
+$con->close();
+?>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
 </body>

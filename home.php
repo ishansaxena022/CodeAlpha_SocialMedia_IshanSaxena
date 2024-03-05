@@ -83,7 +83,6 @@
         </header>
     </div>
     
-
     <!--Home feed-->
 
     <div class="container mt-5">
@@ -91,8 +90,12 @@
     <div class="col-md-6 offset-md-3">
       <h2 class="mb-4">Home Feed</h2>
       <?php
-      include 'dbcon.php'; // Include the database connection script
+      if (!isset($_SESSION['user_id'])) {
+        header("Location: login.php"); // Redirect user to login page if not logged in
+        exit();}
 
+      include 'dbcon.php'; // Include the database connection script
+      
       // Query to fetch all posts
       $sql = "SELECT posts.*, users.username ,users.profile_picture
               FROM posts 
@@ -112,13 +115,17 @@
             echo '<div class="card-body">';
             echo '<p class="card-text">' . $row['content'] . '</p>';
             echo '<img src="' . $row['image'] . '" class="img-fluid" alt="Posted Photo">';
-            ?><br><br><div class="row">
+            ?><br><br>
+            <form action="like_post.php" method="post">
+                <div class="row">
                 <div class="col-lg-1">
-                    <a href=""><img src="files/like.svg" height="24" width="24" alt="Like"></a>
+                    <input name="<?php echo $_SESSION['user_id'];?> "type="image" src="files/like.svg" height="24" width="24" alt="Like">
                 </div>
                 <div class="col-lg-1">
-                <a href=""><img src="files/comment.svg" height="32" width="32" alt="Comment "></a>
+                <input type="image" src="files/comment.svg" height="32" width="32   " alt="Like">
                 </div>
+                </div>
+            </form>
             <?php
             echo '</div>';
             echo '</div>';

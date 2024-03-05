@@ -5,16 +5,48 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Friends</title>
     <?php include "../css/links.php"; ?>
-    <link rel="stylesheet" href="css/headers.css">
+    <link rel="stylesheet" href="../css/headers.css">
 </head>
 <body>
-    <?php include 'dbcon.php';
+    <?php //include 'dbcon.php';
 
-        if(isset($_SESSION['username'])){
-            $allusers = "SELECT * from users";
-            $sql = mysqli_query($con,)
-        }
+        //if(isset($_SESSION['username'])){
+          //  $allusers = "SELECT * from users";
+            //$sql = mysqli_query($con,)
+        //}
     ?>
+    <?php
+session_start(); // Start session for managing user login status
+
+include '../dbcon.php'; // Include the database connection script
+
+// Check if user is logged in
+if (!isset($_SESSION['user_id'])) {
+    header("Location: login.php"); // Redirect user to login page if not logged in
+    exit();
+}
+
+$user_id = $_SESSION['user_id'];
+
+// Query to retrieve user's friend list
+$sql = "SELECT users.username
+        FROM users
+        INNER JOIN friendships ON (users.id = friendships.user2_id)
+        WHERE friendships.user1_id = ?";
+$stmt = $con->prepare($sql);
+$stmt->bind_param("i", $user_id);
+$stmt->execute();
+$result = $stmt->get_result();
+
+// Fetch friend list
+$friends = [];
+while ($row = $result->fetch_assoc()) {
+    $friends[] = $row['username'];
+}
+
+$stmt->close();
+$con->close();
+?>
     <!--Navigation Bar-->
     <div class="container">
         <header class="d-flex flex-wrap align-items-center justify-content-center justify-content-md-between py-3 mb-4 border-bottom">
@@ -60,6 +92,38 @@
         </div>
         </header>
     </div>
+
+    <h2>Friend List</h2>
+    <ul>
+        <?php foreach ($friends as $friend): ?>
+            <li><?php echo $friend; ?></li>
+        <?php endforeach; ?>
+    </ul>
+    <h2>Add New Friend</h2>
+    <input type="text" id="friendUsername" placeholder="Enter friend's username">
+    <button onclick="addFriend()">Add Friend</button>
+
+    <script>
+        function addFriend() {
+            var friendUsername = document.getElementById("friendUsername").value;
+            // AJAX request to add friend
+            var xhr = new XMLHttpRequest();
+            xhr.open("POST", "add_friend.php", true);
+            xhr.setRequestHeader("Content-Type", "application/x-www-form-urlencoded");
+            xhr.onreadystatechange = function() {
+                if (xhr.readyState === XMLHttpRequest.DONE) {
+                    if (xhr.status === 200) {
+                        // Handle successful response
+                        alert(xhr.responseText);
+                    } else {
+                        // Handle error response
+                        alert("Error adding friend: " + xhr.responseText);
+                    }
+                }
+            };
+            xhr.send("friendUsername=" + friendUsername);
+        }
+    </script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0-alpha1/dist/js/bootstrap.bundle.min.js"></script>
     <script src="../assets/dist/js/bootstrap.bundle.min.js"></script>
 </body>
